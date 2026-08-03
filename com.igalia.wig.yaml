@@ -1,0 +1,79 @@
+id: com.igalia.wig
+runtime: org.gnome.Platform
+runtime-version: master
+sdk: org.gnome.Sdk
+sdk-extensions: 
+  - org.freedesktop.Sdk.Extension.llvm22
+command: wig
+finish-args: 
+  - --device=dri
+  - --filesystem=xdg-download
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --socket=wayland
+modules: 
+  - name: libportal
+    buildsystem: meson
+    config-opts: 
+      - -Dbackend-gtk4=enabled
+      - -Dintrospection=false
+      - -Ddocs=false
+    sources: 
+      - type: git
+        url: https://github.com/flatpak/libportal.git
+        branch: main
+  - name: unifdef
+    buildsystem: simple
+    build-commands: 
+      - make CFLAGS=-std=gnu17 && make prefix=/app install
+    sources: 
+      - type: git
+        url: https://github.com/fanf2/unifdef.git
+        branch: master
+  - name: webkitwpe
+    buildsystem: cmake-ninja
+    build-options: 
+      append-path: /usr/lib/sdk/llvm21/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm21/lib
+    config-opts: 
+      - -DPORT=WPE
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
+      - -DDEVELOPER_MODE_FATAL_WARNINGS=0
+      - -DENABLE_EXPERIMENTAL_FEATURES=0
+      - -DENABLE_DOCUMENTATION=0
+      - -DENABLE_INTROSPECTION=0
+      - -DENABLE_MEDIA_STREAM=0
+      - -DENABLE_SPEECH_SYNTHESIS=0
+      - -DENABLE_THUNDER=0
+      - -DENABLE_WEBXR=0
+      - -DENABLE_WPE_LEGACY_API=0
+      - -DENABLE_WPE_PLATFORM=1
+      - -DENABLE_WPE_PLATFORM_DRM=0
+      - -DENABLE_WPE_PLATFORM_HEADLESS=0
+      - -DUSE_LIBBACKTRACE=0
+      - -DUSE_VULKAN=0
+    sources: 
+      - type: git
+        url: https://github.com/WebKit/WebKit.git
+        branch: main
+  - name: wpe-platform-gtk
+    buildsystem: meson
+    sources: 
+    - type: git
+      url: https://github.com/Igalia/wpe-platform-gtk.git
+      branch: main
+  - name: template-glib
+    buildsystem: meson
+    sources: 
+    - type: git
+      url: https://gitlab.gnome.org/GNOME/template-glib.git
+      branch: main
+  - name: wig
+    buildsystem: meson
+    sources: 
+    - type: git
+      url: https://github.com/Igalia/wig.git
+      branch: main
