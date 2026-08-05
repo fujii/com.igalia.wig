@@ -14,24 +14,6 @@ finish-args:
   - --socket=pulseaudio
   - --socket=wayland
 modules: 
-  - name: libportal
-    buildsystem: meson
-    config-opts: 
-      - -Dbackend-gtk4=enabled
-      - -Dintrospection=false
-      - -Ddocs=false
-    sources: 
-      - type: git
-        url: https://github.com/flatpak/libportal.git
-        branch: main
-  - name: unifdef
-    buildsystem: simple
-    build-commands: 
-      - make CFLAGS=-std=gnu17 && make prefix=/app install
-    sources: 
-      - type: git
-        url: https://github.com/fanf2/unifdef.git
-        branch: master
   - name: webkitwpe
     buildsystem: cmake-ninja
     build-options: 
@@ -54,6 +36,7 @@ modules:
       - -DENABLE_WPE_PLATFORM_DRM=0
       - -DENABLE_WPE_PLATFORM_HEADLESS=0
       - -DUSE_LIBBACKTRACE=0
+      - -DUSE_SYSTEM_UNIFDEF=0
       - -DUSE_VULKAN=0
     sources: 
       - type: git
