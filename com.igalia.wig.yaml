@@ -4,6 +4,7 @@ runtime-version: master
 sdk: org.gnome.Sdk
 sdk-extensions: 
   - org.freedesktop.Sdk.Extension.llvm22
+separate-locales: false
 command: wig
 finish-args: 
   - --device=dri
@@ -14,6 +15,18 @@ finish-args:
   - --socket=pulseaudio
   - --socket=wayland
 modules: 
+  - name: libevent
+    config-opts:
+      - --disable-static
+    cleanup:
+      - /bin
+      - /lib/pkgconfig
+      - /lib/*.la
+      - /include
+    sources:
+      - type: archive
+        url: https://github.com/libevent/libevent/releases/download/release-2.1.13-stable/libevent-2.1.13-stable.tar.gz
+        sha256: f7e9383b8c0baa81b687e5b5eecc01beefaf1b19b64151d95ed61647fe7a315c
   - name: webkitwpe
     buildsystem: cmake-ninja
     build-options: 
@@ -21,13 +34,13 @@ modules:
       prepend-ld-library-path: /usr/lib/sdk/llvm21/lib
     config-opts: 
       - -DPORT=WPE
+      - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_C_COMPILER=clang
       - -DCMAKE_CXX_COMPILER=clang++
       - -DDEVELOPER_MODE_FATAL_WARNINGS=0
       - -DENABLE_EXPERIMENTAL_FEATURES=0
       - -DENABLE_DOCUMENTATION=0
       - -DENABLE_INTROSPECTION=0
-      - -DENABLE_MEDIA_STREAM=0
       - -DENABLE_SPEECH_SYNTHESIS=0
       - -DENABLE_THUNDER=0
       - -DENABLE_WEBXR=0
@@ -35,6 +48,8 @@ modules:
       - -DENABLE_WPE_PLATFORM=1
       - -DENABLE_WPE_PLATFORM_DRM=0
       - -DENABLE_WPE_PLATFORM_HEADLESS=0
+      - -DENABLE_WEB_RTC=ON
+      - -DENABLE_WK_WEB_EXTENSIONS=ON
       - -DUSE_LIBBACKTRACE=0
       - -DUSE_SYSTEM_UNIFDEF=0
       - -DUSE_VULKAN=0
