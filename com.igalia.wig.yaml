@@ -8,6 +8,7 @@ separate-locales: false
 command: wig
 finish-args: 
   - --device=dri
+  - --filesystem=home
   - --filesystem=xdg-download
   - --share=ipc
   - --share=network
