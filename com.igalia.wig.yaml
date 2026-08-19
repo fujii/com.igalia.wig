@@ -9,7 +9,9 @@ command: wig
 finish-args: 
   - --device=dri
   - --filesystem=home
+  - --filesystem=xdg-config/openxr:ro
   - --filesystem=xdg-download
+  - --filesystem=xdg-run/monado_comp_ipc
   - --share=ipc
   - --share=network
   - --socket=fallback-x11
@@ -28,6 +30,24 @@ modules:
       - type: archive
         url: https://github.com/libevent/libevent/releases/download/release-2.1.13-stable/libevent-2.1.13-stable.tar.gz
         sha256: f7e9383b8c0baa81b687e5b5eecc01beefaf1b19b64151d95ed61647fe7a315c
+
+  - name: openxr
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DDYNAMIC_LOADER=ON
+      - -DBUILD_TESTS=OFF
+      - -DBUILD_API_LAYERS=OFF
+    cleanup:
+      - /include
+      - /lib/cmake
+      - /lib/pkgconfig
+    sources:
+      - type: git
+        url: https://github.com/KhronosGroup/OpenXR-SDK.git
+        tag: release-1.1.62
+        commit: 00678df64b49ad878a8e882af933c28518cafd1c
+
   - name: webkitwpe
     buildsystem: cmake-ninja
     build-options: 
@@ -44,7 +64,8 @@ modules:
       - -DENABLE_INTROSPECTION=0
       - -DENABLE_SPEECH_SYNTHESIS=0
       - -DENABLE_THUNDER=0
-      - -DENABLE_WEBXR=0
+      - -DENABLE_WEBXR=1
+      - -DENABLE_WEBXR_LAYERS=1
       - -DENABLE_WPE_LEGACY_API=0
       - -DENABLE_WPE_PLATFORM=1
       - -DENABLE_WPE_PLATFORM_DRM=0
