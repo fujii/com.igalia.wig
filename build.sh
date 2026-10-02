@@ -1,1 +1,4 @@
-flatpak-builder --force-clean --user --install _build_$(date +%F) com.igalia.wig.yaml
+#!/bin/sh
+set -e
+date=$(date +%F)
+flatpak-builder --force-clean --user --install --default-branch=main-$date _build com.igalia.wig.yaml

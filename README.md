@@ -32,12 +32,18 @@ Building WebKit takes a long time and needs a lot of memory and disk space.
 This runs:
 
 ```sh
-flatpak-builder --force-clean --user --install _build_$(date +%F) com.igalia.wig.yaml
+flatpak-builder --force-clean --user --install --default-branch=main-$(date +%F) _build com.igalia.wig.yaml
 ```
 
-It builds into a dated directory such as `_build_2026-09-27` and installs the result for the current user as `com.igalia.wig//master`.
+It builds in `_build` and installs the result for the current user as a dated branch such as `com.igalia.wig//main-2026-09-27`.
+The newly installed branch becomes the current one, so `flatpak run com.igalia.wig` runs the latest build.
 The `wig`, WebKit and wpe-platform-gtk sources track their `main` branches, so every build picks up the latest commits.
-The exact commits used by a build are recorded in `_build_<date>/files/manifest.json`.
+`_build` is overwritten by every build, but each build is kept as its branch in the local repository `.flatpak-builder/cache`.
+The exact commits used by a build are recorded in `files/manifest.json`:
+
+```sh
+ostree --repo=.flatpak-builder/cache cat app/com.igalia.wig/x86_64/main-2026-09-27 /files/manifest.json
+```
 
 ## Running
 
@@ -51,26 +57,62 @@ The sub-sandbox has no access to your home directory, so if you start wig from s
 
 ### Running an older build
 
-Don't use `flatpak-builder --run` with an old build directory.
-WebKit's web processes are spawned via the Flatpak portal, and the portal starts them from the installed `master` instead of from the build directory.
-If the two WebKit versions differ, the web processes crash with `Received invalid message`.
-
-Instead, export the old build as its own branch and install that branch:
+Each build stays installed as its own branch, so you can run an older one by naming its branch:
 
 ```sh
-flatpak build-export --no-update-summary .flatpak-builder/cache _build_2026-09-21 main-2026-09-21
-flatpak build-update-repo .flatpak-builder/cache
-flatpak --user install wig-origin com.igalia.wig//main-2026-09-21
-flatpak --user make-current com.igalia.wig master   # keep master as the default
+flatpak --user list --app | grep com.igalia.wig   # list the installed builds
 flatpak run com.igalia.wig//main-2026-09-21
 ```
 
-`wig-origin` is the local remote that `flatpak-builder --install` adds for `.flatpak-builder/cache`.
+To change which build `flatpak run com.igalia.wig` starts:
 
-To remove it again:
+```sh
+flatpak --user make-current com.igalia.wig main-2026-09-21
+```
+
+Don't use `flatpak-builder --run` with an old build directory.
+WebKit's web processes are spawned via the Flatpak portal, and the portal starts them from the installed app instead of from the build directory.
+If the two WebKit versions differ, the web processes crash with `Received invalid message`.
+
+### Uninstalling a build
+
+```sh
+flatpak --user uninstall com.igalia.wig//main-2026-09-21
+```
+
+This only removes the installed app.
+The build is still in the local repository `.flatpak-builder/cache`, so you can install it again later.
+
+### Reinstalling an uninstalled build
+
+Install it from `.flatpak-builder/cache`:
+
+```sh
+flatpak --user install wig-origin com.igalia.wig//main-2026-09-21
+```
+
+`wig-origin` is the local remote that `flatpak-builder --install` adds for `.flatpak-builder/cache`.
+Flatpak removes it automatically when the last build installed from it is uninstalled.
+In that case, add it again first:
+
+```sh
+flatpak --user remote-add --no-gpg-verify wig-origin .flatpak-builder/cache
+```
+
+To list the branches in `.flatpak-builder/cache`, run:
+
+```sh
+ostree --repo=.flatpak-builder/cache refs | grep ^app/com.igalia.wig/
+```
+
+### Removing a build completely
+
+To also free the disk space, delete the branch from `.flatpak-builder/cache`:
 
 ```sh
 flatpak --user uninstall com.igalia.wig//main-2026-09-21
 ostree --repo=.flatpak-builder/cache refs --delete app/com.igalia.wig/x86_64/main-2026-09-21
-flatpak build-update-repo .flatpak-builder/cache
+flatpak build-update-repo --prune .flatpak-builder/cache
 ```
+
+After this, the build can't be reinstalled.
