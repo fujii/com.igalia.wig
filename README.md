@@ -2,7 +2,7 @@
 
 Flatpak manifest for [wig](https://github.com/Igalia/wig), a web browser built on WPE WebKit.
 
-The manifest builds these modules from source: libevent, OpenXR SDK, WPE WebKit (`main`), wpe-platform-gtk, template-glib and wig.
+The manifest builds these modules from source: libevent, OpenXR SDK, Eigen, libmd, libbsd, Monado, WPE WebKit (`main`), wpe-platform-gtk, template-glib and wig.
 
 ## Requirements
 
@@ -54,6 +54,27 @@ flatpak run com.igalia.wig
 Start it from a directory such as `~` or `/`.
 WebKit spawns its web processes in a sub-sandbox with `flatpak-spawn --sandbox`, which uses the current working directory.
 The sub-sandbox has no access to your home directory, so if you start wig from somewhere else inside it (for example `~/src/foo`), the sandbox check fails and WebKit silently runs the web processes without the sandbox ([bug 325395](https://bugs.webkit.org/show_bug.cgi?id=325395)).
+
+### WebXR
+
+WebXR uses the [Monado](https://monado.freedesktop.org/) OpenXR runtime, which is included in the app.
+Start `monado-service` from the app before using WebXR:
+
+```sh
+flatpak run --command=monado-service com.igalia.wig
+```
+
+It runs in a separate sandbox from wig, and wig connects to it through `$XDG_RUNTIME_DIR/app/com.igalia.wig/monado_comp_ipc`.
+Flatpak shares this directory between all instances of the app, so it doesn't matter whether `monado-service` or wig is started first.
+To stop it, press Enter or Ctrl+C.
+If its stdin is `/dev/null` or a regular file, for example when you start it from a script, set `XRT_NO_STDIN=1`, or it fails to start because it can't watch stdin.
+
+The host's Monado isn't used.
+Monado's client library, which wig loads, must be the same version as `monado-service`, and the host's library can't be loaded in the sandbox anyway.
+Stop the host's `monado.service` while using the app's one, because both can't use the HMD at the same time.
+
+The app has `--device=all` so that `monado-service` can access the HMD and the controllers.
+The host still needs the udev rules for the devices, such as those of [xr-hardware](https://gitlab.freedesktop.org/monado/utilities/xr-hardware).
 
 ### Running an older build
 
