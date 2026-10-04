@@ -51,10 +51,6 @@ ostree --repo=.flatpak-builder/cache cat app/com.igalia.wig/x86_64/main-2026-09-
 flatpak run com.igalia.wig
 ```
 
-Start it from a directory such as `~` or `/`.
-WebKit spawns its web processes in a sub-sandbox with `flatpak-spawn --sandbox`, which uses the current working directory.
-The sub-sandbox has no access to your home directory, so if you start wig from somewhere else inside it (for example `~/src/foo`), the sandbox check fails and WebKit silently runs the web processes without the sandbox ([bug 325395](https://bugs.webkit.org/show_bug.cgi?id=325395)).
-
 ### WebXR
 
 WebXR uses the [Monado](https://monado.freedesktop.org/) OpenXR runtime, which is included in the app.
