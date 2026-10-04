@@ -137,3 +137,31 @@ flatpak build-update-repo --prune .flatpak-builder/cache
 ```
 
 After this, the build can't be reinstalled.
+
+## Debugging
+
+### Backtrace of a crash
+
+Web processes that crash leave a core file that `coredumpctl` can find.
+Find the PID of the crashed process:
+
+```sh
+coredumpctl list
+```
+
+Then print its backtrace with `flatpak-coredumpctl`, which runs gdb inside the app's sandbox:
+
+```sh
+flatpak-coredumpctl -m <pid> --gdb-arguments="-batch -ex 'bt 20'" com.igalia.wig//main-2026-09-27
+```
+
+Give the branch of the build that actually crashed.
+With a different branch, the symbols resolve to nonsense names.
+
+The debug symbols come from the `com.igalia.wig.Debug` extension, which has to be installed for the same branch:
+
+```sh
+flatpak --user list --all | grep com.igalia.wig.Debug
+```
+
+If the backtrace has no function names or source locations, the extension for that branch is missing.
