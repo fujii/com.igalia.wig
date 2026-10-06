@@ -32,17 +32,21 @@ Building WebKit takes a long time and needs a lot of memory and disk space.
 This runs:
 
 ```sh
-flatpak-builder --force-clean --user --install --default-branch=main-$(date +%F) _build com.igalia.wig.yaml
+flatpak-builder --force-clean --user --install --default-branch=main build com.igalia.wig.yaml
+flatpak build-bundle .flatpak-builder/cache bundles/com.igalia.wig-$(date +%F).flatpak com.igalia.wig main
+flatpak build-bundle --runtime .flatpak-builder/cache bundles/com.igalia.wig.Debug-$(date +%F).flatpak com.igalia.wig.Debug main
 ```
 
-It builds in `_build` and installs the result for the current user as a dated branch such as `com.igalia.wig//main-2026-09-27`.
-The newly installed branch becomes the current one, so `flatpak run com.igalia.wig` runs the latest build.
+It builds in `build` and installs the result for the current user as `com.igalia.wig//main`, so `flatpak run com.igalia.wig` runs the latest build.
+Every build replaces the previous one, both in the installation and in the local repository `.flatpak-builder/cache`.
+To keep older builds, it also exports the build and its `com.igalia.wig.Debug` extension as dated single-file bundles such as `bundles/com.igalia.wig-2026-09-27.flatpak` and `bundles/com.igalia.wig.Debug-2026-09-27.flatpak`.
+The app bundle is about 40 MB, and the Debug bundle is about 600 MB and takes several minutes to write.
+`bundles` is ignored by git, as are `build` and `.flatpak-builder`.
 The `wig`, WebKit and wpe-platform-gtk sources track their `main` branches, so every build picks up the latest commits.
-`_build` is overwritten by every build, but each build is kept as its branch in the local repository `.flatpak-builder/cache`.
 The exact commits used by a build are recorded in `files/manifest.json`:
 
 ```sh
-ostree --repo=.flatpak-builder/cache cat app/com.igalia.wig/x86_64/main-2026-09-27 /files/manifest.json
+ostree --repo=.flatpak-builder/cache cat app/com.igalia.wig/x86_64/main /files/manifest.json
 ```
 
 ## Running
@@ -74,65 +78,19 @@ The host still needs the udev rules for the devices, such as those of [xr-hardwa
 
 ### Running an older build
 
-Each build stays installed as its own branch, so you can run an older one by naming its branch:
+Only the latest build is installed, so install an older one from its bundles, which replaces the current one:
 
 ```sh
-flatpak --user list --app | grep com.igalia.wig   # list the installed builds
-flatpak run com.igalia.wig//main-2026-09-21
+flatpak --user uninstall com.igalia.wig com.igalia.wig.Debug
+flatpak --user install --bundle bundles/com.igalia.wig-2026-09-21.flatpak
+flatpak --user install --bundle bundles/com.igalia.wig.Debug-2026-09-21.flatpak
 ```
 
-To change which build `flatpak run com.igalia.wig` starts:
-
-```sh
-flatpak --user make-current com.igalia.wig main-2026-09-21
-```
+Installing the bundle of the latest build, or running `./build.sh`, brings the current one back.
 
 Don't use `flatpak-builder --run` with an old build directory.
 WebKit's web processes are spawned via the Flatpak portal, and the portal starts them from the installed app instead of from the build directory.
 If the two WebKit versions differ, the web processes crash with `Received invalid message`.
-
-### Uninstalling a build
-
-```sh
-flatpak --user uninstall com.igalia.wig//main-2026-09-21
-```
-
-This only removes the installed app.
-The build is still in the local repository `.flatpak-builder/cache`, so you can install it again later.
-
-### Reinstalling an uninstalled build
-
-Install it from `.flatpak-builder/cache`:
-
-```sh
-flatpak --user install wig-origin com.igalia.wig//main-2026-09-21
-```
-
-`wig-origin` is the local remote that `flatpak-builder --install` adds for `.flatpak-builder/cache`.
-Flatpak removes it automatically when the last build installed from it is uninstalled.
-In that case, add it again first:
-
-```sh
-flatpak --user remote-add --no-gpg-verify wig-origin .flatpak-builder/cache
-```
-
-To list the branches in `.flatpak-builder/cache`, run:
-
-```sh
-ostree --repo=.flatpak-builder/cache refs | grep ^app/com.igalia.wig/
-```
-
-### Removing a build completely
-
-To also free the disk space, delete the branch from `.flatpak-builder/cache`:
-
-```sh
-flatpak --user uninstall com.igalia.wig//main-2026-09-21
-ostree --repo=.flatpak-builder/cache refs --delete app/com.igalia.wig/x86_64/main-2026-09-21
-flatpak build-update-repo --prune .flatpak-builder/cache
-```
-
-After this, the build can't be reinstalled.
 
 ## Debugging
 
@@ -148,16 +106,17 @@ coredumpctl list
 Then print its backtrace with `flatpak-coredumpctl`, which runs gdb inside the app's sandbox:
 
 ```sh
-flatpak-coredumpctl -m <pid> --gdb-arguments="-batch -ex 'bt 20'" com.igalia.wig//main-2026-09-27
+flatpak-coredumpctl -m <pid> --gdb-arguments="-batch -ex 'bt 20'" com.igalia.wig
 ```
 
-Give the branch of the build that actually crashed.
-With a different branch, the symbols resolve to nonsense names.
+The installed build must be the one that actually crashed.
+With a different build, the symbols resolve to nonsense names.
+If you have rebuilt since the crash, install the bundles of the crashed build first, as described in "Running an older build".
 
-The debug symbols come from the `com.igalia.wig.Debug` extension, which has to be installed for the same branch:
+The debug symbols come from the `com.igalia.wig.Debug` extension, which has to be installed together with the app:
 
 ```sh
 flatpak --user list --all | grep com.igalia.wig.Debug
 ```
 
-If the backtrace has no function names or source locations, the extension for that branch is missing.
+If the backtrace has no function names or source locations, the extension is missing or belongs to a different build.
