@@ -2,11 +2,11 @@ id: com.igalia.wig
 runtime: org.gnome.Platform
 runtime-version: '51'
 sdk: org.gnome.Sdk
-sdk-extensions: 
+sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
 separate-locales: false
 command: wig
-finish-args: 
+finish-args:
   - --device=all
   - --env=XR_RUNTIME_JSON=/app/share/openxr/1/openxr_monado.json
   - --filesystem=home
@@ -16,7 +16,7 @@ finish-args:
   - --socket=fallback-x11
   - --socket=pulseaudio
   - --socket=wayland
-modules: 
+modules:
   - name: libevent
     config-opts:
       - --disable-static
@@ -113,16 +113,33 @@ modules:
         url: https://gitlab.freedesktop.org/monado/monado.git
         commit: 22d5c936ccc7218e7d139c7d921456c49ff5aaf1
 
+  - name: libsoup
+    buildsystem: meson
+    config-opts:
+      - --buildtype=release
+      - -Dintrospection=disabled
+      - -Dvapi=disabled
+      - -Ddocs=disabled
+      - -Dtests=false
+      - -Dsysprof=disabled
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/libsoup.git
+        commit: 7d43af25f17bc1c77802e37309b76bc60780cd72
+
   - name: webkitwpe
     buildsystem: cmake-ninja
-    build-options: 
+    build-options:
       append-path: /usr/lib/sdk/llvm22/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
-    config-opts: 
+    config-opts:
       - -DPORT=WPE
-      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DCMAKE_C_FLAGS_RELWITHDEBINFO=-O2 -g1 -DNDEBUG
+      - -DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g1 -DNDEBUG
       - -DCMAKE_C_COMPILER=clang
       - -DCMAKE_CXX_COMPILER=clang++
+      - -DCMAKE_LINKER_TYPE=LLD
       - -DDEVELOPER_MODE_FATAL_WARNINGS=0
       - -DENABLE_EXPERIMENTAL_FEATURES=0
       - -DENABLE_DOCUMENTATION=0
@@ -140,25 +157,25 @@ modules:
       - -DUSE_LIBBACKTRACE=0
       - -DUSE_SYSTEM_UNIFDEF=0
       - -DUSE_VULKAN=0
-    sources: 
+    sources:
       - type: git
         url: https://github.com/WebKit/WebKit.git
         branch: main
+
   - name: wpe-platform-gtk
     buildsystem: meson
-    sources: 
-    - type: git
-      url: https://github.com/Igalia/wpe-platform-gtk.git
-      branch: main
-  - name: template-glib
-    buildsystem: meson
-    sources: 
-    - type: git
-      url: https://gitlab.gnome.org/GNOME/template-glib.git
-      branch: main
+    config-opts:
+      - --buildtype=debugoptimized
+    sources:
+      - type: git
+        url: https://github.com/Igalia/wpe-platform-gtk.git
+        branch: main
+
   - name: wig
     buildsystem: meson
-    sources: 
-    - type: git
-      url: https://github.com/Igalia/wig.git
-      branch: main
+    config-opts:
+      - --buildtype=debugoptimized
+    sources:
+      - type: git
+        url: https://github.com/Igalia/wig.git
+        branch: main

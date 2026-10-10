@@ -2,7 +2,7 @@
 
 Flatpak manifest for [wig](https://github.com/Igalia/wig), a web browser built on WPE WebKit.
 
-The manifest builds these modules from source: libevent, OpenXR SDK, Eigen, libmd, libbsd, Monado, WPE WebKit (`main`), wpe-platform-gtk, template-glib and wig.
+The manifest builds these modules from source: libevent, OpenXR SDK, Eigen, libmd, libbsd, Monado, libsoup, WPE WebKit (`main`), wpe-platform-gtk and wig.
 
 ## Requirements
 
@@ -40,7 +40,7 @@ flatpak build-bundle --runtime .flatpak-builder/cache bundles/com.igalia.wig.Deb
 It builds in `build` and installs the result for the current user as `com.igalia.wig//main`, so `flatpak run com.igalia.wig` runs the latest build.
 Every build replaces the previous one, both in the installation and in the local repository `.flatpak-builder/cache`.
 To keep older builds, it also exports the build and its `com.igalia.wig.Debug` extension as dated single-file bundles such as `bundles/com.igalia.wig-2026-09-27.flatpak` and `bundles/com.igalia.wig.Debug-2026-09-27.flatpak`.
-The app bundle is about 40 MB, and the Debug bundle is about 600 MB and takes several minutes to write.
+The app bundle is about 40 MB, and the Debug bundle is about 300 MB and takes several minutes to write.
 `bundles` is ignored by git, as are `build` and `.flatpak-builder`.
 The `wig`, WebKit and wpe-platform-gtk sources track their `main` branches, so every build picks up the latest commits.
 The exact commits used by a build are recorded in `files/manifest.json`:
