@@ -16,7 +16,7 @@ The manifest builds these modules from source: libevent, OpenXR SDK, Eigen, libm
 - The runtime, SDK and SDK extension used by the manifest:
 
   ```sh
-  flatpak install --user flathub org.gnome.Platform//50 org.gnome.Sdk//50 org.freedesktop.Sdk.Extension.llvm22//25.08
+  flatpak install --user flathub org.gnome.Platform//51 org.gnome.Sdk//51 org.freedesktop.Sdk.Extension.llvm22//26.08
   ```
 
   Alternatively, pass `--install-deps-from=flathub` to `flatpak-builder` to install them automatically.
